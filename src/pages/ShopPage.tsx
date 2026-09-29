@@ -22,6 +22,7 @@ export const ShopPage: React.FC = () => {
   const searchParam = searchParams.get('search') || '';
   const sortParam = searchParams.get('sort') || 'featured';
   const pageParam = parseInt(searchParams.get('page') || '1', 10);
+  const limitParam = searchParams.get('limit') || '32';
   const minPriceParam = searchParams.get('minPrice') || '';
   const maxPriceParam = searchParams.get('maxPrice') || '';
   const colorParam = searchParams.get('color') || 'all';
@@ -57,7 +58,7 @@ export const ShopPage: React.FC = () => {
         if (featuredParam) params.set('featured', 'true');
         params.set('sort', sortParam);
         params.set('page', pageParam.toString());
-        params.set('limit', '16');
+        params.set('limit', limitParam === 'all' ? '200' : limitParam);
 
         const res = await api.get(`/products?${params.toString()}`);
         let fetched: Product[] = res.data.products || [];
@@ -79,7 +80,7 @@ export const ShopPage: React.FC = () => {
 
     fetchProducts();
     window.scrollTo({ top: 0, behavior: 'smooth' });
-  }, [categoryParam, searchParam, sortParam, pageParam, minPriceParam, maxPriceParam, colorParam, materialParam, newArrivalParam, saleParam, featuredParam]);
+  }, [categoryParam, searchParam, sortParam, pageParam, limitParam, minPriceParam, maxPriceParam, colorParam, materialParam, newArrivalParam, saleParam, featuredParam]);
 
   const updateParam = (key: string, value: string) => {
     const next = new URLSearchParams(searchParams);
@@ -123,8 +124,8 @@ export const ShopPage: React.FC = () => {
             </p>
           </div>
 
-          {/* Sort & Mobile Filter Trigger */}
-          <div className="flex items-center gap-3">
+          {/* Sort, Limit & Mobile Filter Trigger */}
+          <div className="flex flex-wrap items-center gap-3">
             <button
               onClick={() => setMobileFilterOpen(true)}
               className="lg:hidden px-3.5 py-2 border border-stone-300 rounded-lg text-xs font-semibold flex items-center gap-2 hover:bg-stone-50"
@@ -132,6 +133,36 @@ export const ShopPage: React.FC = () => {
               <Filter className="w-3.5 h-3.5" />
               <span>Filters</span>
             </button>
+
+            {limitParam !== 'all' ? (
+              <button
+                onClick={() => updateParam('limit', 'all')}
+                className="px-3.5 py-2 bg-[#C9A66B] hover:bg-[#b59257] text-[#171717] rounded-lg text-xs font-semibold uppercase tracking-wider transition-colors shadow-xs"
+              >
+                Show All 130+ Items
+              </button>
+            ) : (
+              <button
+                onClick={() => updateParam('limit', '32')}
+                className="px-3.5 py-2 bg-stone-200 hover:bg-stone-300 text-[#171717] rounded-lg text-xs font-semibold uppercase tracking-wider transition-colors"
+              >
+                Show 32 Per Page
+              </button>
+            )}
+
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-stone-500 hidden sm:inline">Per Page:</span>
+              <select
+                value={limitParam}
+                onChange={(e) => updateParam('limit', e.target.value)}
+                className="py-2 px-3 text-xs bg-white border border-stone-300 rounded-lg focus:outline-hidden focus:border-[#8B6F47]"
+              >
+                <option value="16">16 Items</option>
+                <option value="32">32 Items</option>
+                <option value="64">64 Items</option>
+                <option value="all">All 130+ Items</option>
+              </select>
+            </div>
 
             <div className="flex items-center gap-2">
               <span className="text-xs text-stone-500 hidden sm:inline">Sort:</span>
@@ -313,7 +344,7 @@ export const ShopPage: React.FC = () => {
               </div>
 
               {/* Pagination */}
-              {totalPages > 1 && (
+              {totalPages > 1 && limitParam !== 'all' && (
                 <div className="mt-12 pt-6 border-t border-stone-200 flex items-center justify-between">
                   <button
                     disabled={pageParam <= 1}
